@@ -10,7 +10,17 @@
     $json_flux = file_get_contents('https://ipinfo.io/'.$ip.'/geo');
     $infos_flux = json_decode($json_flux, true);
     $json_api  = file_get_contents('https://ipinfo.io/'.$ip.'?token=c3ce06468ac6c3');
-    $infos_api = json_decode($json_api, true);
+    $infos_api_json = json_decode($json_api, true);
+    $xml_api = file_get_contents('https://api.whatismyip.com/ip-address-lookup.php?key=374b59bb7c81e8a165dcd3b9c0d119bf&input='.$ip.'&output=xml');
+    $infos_api_xml = simplexml_load_string($xml_api);
+
+    //champ pour le xml
+    $pays_xml = $infos_api_xml->country_name;
+    $region_xml = $infos_api_xml->region;
+    $ville_xml = $infos_api_xml->city;
+    $latitude_xml = $infos_api_xml->latitude;
+    $longitude_xml = $infos_api_xml->longitude;
+    $isp_xml = $infos_api_xml->isp;
 ?>
 
 <!DOCTYPE html>
@@ -71,15 +81,32 @@
                     <h2>Informations supplémentaires premium (10 requête par jour) : </h2>
                     <?php 
                         if (isset($infos_api['city'])) {
-                            $coords = explode(',', $infos_api['loc']);
-                            echo "<p>Ville : ".$infos_api['city']."</p>
-                                  <p>Region : ".$infos_api['region']."</p>
-                                  <p>Code Postal: ".$infos_api['postal']."</p>
+                            $coords = explode(',', $infos_api_json['loc']);
+                            echo "<p>Ville : ".$infos_api_json['city']."</p>
+                                  <p>Region : ".$infos_api_json['region']."</p>
+                                  <p>Code Postal: ".$infos_api_json['postal']."</p>
                                   <p>Latitude : ".$coords[0]."</p>
                                   <p>Longitude : ".$coords[1]."</p>
-                                  <p>Timezone : ".$infos_api['timezone']."</p>";
+                                  <p>Timezone : ".$infos_api_json['timezone']."</p>";
                         } else{
-                            echo"Requête du jour épuisé !"
+                            echo "Requête du jour épuisé !";
+                        }
+                    ?>
+                </article>
+
+                <article>
+                    <h2>Informations récupérer via flux xml (24 requête par jour)</h2>
+                    <?php
+                        if (isset($pays_xml)) {
+                            echo "<p>Pays : ".$pays_xml."</p>
+                                    <p>Region : ".$region_xml."</p>
+                                    <p>Ville : ".$ville_xml."</p>
+                                    <p>Latitude : ".$latitude_xml."</p>
+                                    <p>Longitude : ".$longitude_xml."</p>
+                                    <p>Internet Service Provider : ".$isp_xml."</p>";
+
+                        } else{
+                            echo "Requête du jour épuisé !";                            
                         }
                     ?>
                 </article>
