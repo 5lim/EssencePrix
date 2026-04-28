@@ -1,94 +1,111 @@
 <?php
-    // Partie API Ghibli
-    $json  = file_get_contents('https://ghibliapi.vercel.app/films');
-    $films = json_decode($json, true);
-    $index = array_rand($films);
-    $film  = $films[$index];
+require 'include/header_inc.php';
 
-    // Partie API IP
-    $ip        = $_SERVER['REMOTE_ADDR'];
-    $json_flux = file_get_contents('https://ipinfo.io/'.$ip.'/geo');
-    $infos_flux = json_decode($json_flux, true);
-    $json_api  = file_get_contents('https://ipinfo.io/'.$ip.'?token=c3ce06468ac6c3');
-    $infos_api = json_decode($json_api, true);
+$json_ghibli = file_get_contents('https://ghibliapi.vercel.app/films');
+$films       = json_decode($json_ghibli, true);
+$index       = array_rand($films);
+$film        = $films[$index];
+
+
+$ip         = $_SERVER['REMOTE_ADDR'];
+$json_flux  = file_get_contents('https://ipinfo.io/' . $ip . '/geo');
+$infos_flux = json_decode($json_flux, true);
+
+
+$json_api       = file_get_contents('https://ipinfo.io/' . $ip . '?token=c3ce06468ac6c3');
+$infos_api_json = json_decode($json_api, true);
+
+$xml_brut      = file_get_contents('https://api.whatismyip.com/ip-address-lookup.php?key=374b59bb7c81e8a165dcd3b9c0d119bf&input=' . $ip . '&output=xml');
+$infos_api_xml = false;
+
+if ($xml_brut !== false && str_starts_with(trim($xml_brut), '<')) {
+    $infos_api_xml = simplexml_load_string($xml_brut);
+}
 ?>
 
-<!DOCTYPE html>
-<html lang="fr">
-    <head>
-        <meta name="author" content="Gamard et Haroud"/>
-        <meta charset="UTF-8">
-        <title>API Ghibli / IP</title>
-        <link rel="stylesheet" href="style_p.css">
-    </head>
-    <body>
+    <section>
 
-        <header>
-            <h1>Page Tech</h1>
-        </header>
+        <h1>API Ghibli — film aléatoire</h1>
 
-        <main>
-            <section>
-                <h1><strong>Partie API Ghibli</strong></h1>
-                <article>
-                    <h2><?php echo $film['title']; ?></h2>
-                    <p><?php echo $film['original_title']; ?></p>
-                    <p><?php echo $film['original_title_romanised']; ?></p>
-        			<p><strong>Année de sortie :</strong> <?php echo $film['release_date']; ?><p>
-        			<p><?php echo $film['description']; ?></p>
+        <article>
+            <h2><?= htmlspecialchars($film['title']) ?></h2>
 
-                    <figure>
-                        <img src="<?php echo $film['image']; ?>" alt="Affiche de <?php echo $film['title']; ?>">
-                        <figcaption>Affiche officielle</figcaption>
-                    </figure>
+            <p><em><?= htmlspecialchars($film['original_title']) ?></em>
+               — <?= htmlspecialchars($film['original_title_romanised']) ?></p>
 
-                    <figure>
-                        <img src="<?php echo $film['movie_banner']; ?>" alt="Bannière de <?php echo $film['title']; ?>">
-                        <figcaption>Bannière du film</figcaption>
-                    </figure>
+            <p><strong>Année de sortie :</strong> <?= htmlspecialchars($film['release_date']) ?></p>
 
-                    <p><a href="tech.php">Afficher un autre film</a></p>
-                </article>
-            </section>
+            <p><?= htmlspecialchars($film['description']) ?></p>
 
-            <section>
-                <h1><strong>Partie API IP</strong></h1>
-                <article>
-                    <h2>Informations récupérer via flux json :</h2>
-                    <p>Adresse IP : <?php echo $infos_flux['ip']; ?></p>
-                    <p>Ville : <?php echo $infos_flux['city']; ?></p>
-                    <p>Code Postal : <?php echo $infos_flux['postal']; ?></p>
-                    <p>Region : <?php echo $infos_flux['region']; ?></p>
-                    <p>Pays : <?php echo $infos_flux['country']; ?></p>
-                </article>
+            <figure>
+                <img src="<?= htmlspecialchars($film['image']) ?>" alt="Affiche de <?= htmlspecialchars($film['title']) ?>">
+                <figcaption>Affiche officielle</figcaption>
+            </figure>
 
-                <article>
-                    <h2>Informations récupérer via requête ipinfo : </h2>
-                    <p>Adresse IP : <?php echo $infos_api['ip']; ?></p>
-                    <p>Pays : <?php echo $infos_api['country']; ?></p>
-                </article>
-                <article>
-                    <h2>Informations supplémentaires premium (10 requête par jour) : </h2>
-                    <?php 
-                        if (isset($infos_api['city'])) {
-                            $coords = explode(',', $infos_api['loc']);
-                            echo "<p>Ville : ".$infos_api['city']."</p>
-                                  <p>Region : ".$infos_api['region']."</p>
-                                  <p>Code Postal: ".$infos_api['postal']."</p>
-                                  <p>Latitude : ".$coords[0]."</p>
-                                  <p>Longitude : ".$coords[1]."</p>
-                                  <p>Timezone : ".$infos_api['timezone']."</p>";
-                        } else{
-                            echo"Requête du jour épuisé !"
-                        }
-                    ?>
-                </article>
-            </section>
-        </main>
+            <figure>
+                <img src="<?= htmlspecialchars($film['movie_banner']) ?>" alt="Bannière de <?= htmlspecialchars($film['title']) ?>">
+                <figcaption>Bannière du film</figcaption>
+            </figure>
 
-        <footer>
-            <p><a href="index.php">Retour à l'accueil</a></p>
-        </footer>
+            <p>
+                <a href="tech.php">Afficher un autre film</a>
+            </p>
+        </article>
 
-    </body>
-</html>
+    </section>
+
+    <section>
+
+        <h1>API IP — informations du visiteur</h1>
+
+        <article>
+            <h2>Flux JSON public</h2>
+
+            <p><strong>Adresse IP :</strong> <?= htmlspecialchars($infos_flux['ip']     ?? '—') ?></p>
+            <p><strong>Ville :</strong>       <?= htmlspecialchars($infos_flux['city']   ?? '—') ?></p>
+            <p><strong>Code postal :</strong> <?= htmlspecialchars($infos_flux['postal'] ?? '—') ?></p>
+            <p><strong>Région :</strong>      <?= htmlspecialchars($infos_flux['region'] ?? '—') ?></p>
+            <p><strong>Pays :</strong>        <?= htmlspecialchars($infos_flux['country']?? '—') ?></p>
+        </article>
+
+        <article>
+            <h2>API ipinfo — données de base</h2>
+
+            <p><strong>Adresse IP :</strong> <?= htmlspecialchars($infos_api_json['ip']      ?? '—') ?></p>
+            <p><strong>Pays :</strong>        <?= htmlspecialchars($infos_api_json['country'] ?? '—') ?></p>
+        </article>
+
+        <article>
+            <h2>API ipinfo — données enrichies (token)</h2>
+
+            <?php if (isset($infos_api_json['city'])): ?>
+                <?php $coords = explode(',', $infos_api_json['loc'] ?? ','); ?>
+                <p><strong>Ville :</strong>        <?= htmlspecialchars($infos_api_json['city']     ?? '—') ?></p>
+                <p><strong>Région :</strong>        <?= htmlspecialchars($infos_api_json['region']   ?? '—') ?></p>
+                <p><strong>Code postal :</strong>   <?= htmlspecialchars($infos_api_json['postal']   ?? '—') ?></p>
+                <p><strong>Latitude :</strong>      <?= htmlspecialchars($coords[0]                  ?? '—') ?></p>
+                <p><strong>Longitude :</strong>     <?= htmlspecialchars($coords[1]                  ?? '—') ?></p>
+                <p><strong>Fuseau horaire :</strong><?= htmlspecialchars($infos_api_json['timezone'] ?? '—') ?></p>
+            <?php else: ?>
+                <p>Quota journalier épuisé.</p>
+            <?php endif; ?>
+        </article>
+
+        <article>
+            <h2>Flux XML</h2>
+
+            <?php if ($infos_api_xml): ?>
+                <p><strong>Pays :</strong>      <?= htmlspecialchars((string) $infos_api_xml->country_name) ?></p>
+                <p><strong>Région :</strong>    <?= htmlspecialchars((string) $infos_api_xml->region)       ?></p>
+                <p><strong>Ville :</strong>     <?= htmlspecialchars((string) $infos_api_xml->city)         ?></p>
+                <p><strong>Latitude :</strong>  <?= htmlspecialchars((string) $infos_api_xml->latitude)     ?></p>
+                <p><strong>Longitude :</strong> <?= htmlspecialchars((string) $infos_api_xml->longitude)    ?></p>
+                <p><strong>FAI :</strong>       <?= htmlspecialchars((string) $infos_api_xml->isp)          ?></p>
+            <?php else: ?>
+                <p>Quota journalier épuisé.</p>
+            <?php endif; ?>
+        </article>
+
+    </section>
+
+<?php require 'include/footer_inc.php'; ?>

@@ -1,16 +1,19 @@
-/* ==============================
-   Ghibli API — Gris Perle · Indigo
-   ============================== */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
 :root {
-    --fond:    #f1f5f9;
-    --blanc:   #ffffff;
+    --fond: #f8fafc;
+    --blanc: #ffffff;
     --bordure: #e2e8f0;
-    --indigo:  #6366f1;
-    --texte:   #1e293b;
-    --gris:    #94a3b8;
+    --indigo: #4f46e5;
+    --indigo-clair: #eef2ff;
+    --texte: #0f172a;
+    --texte-sec: #64748b;
+    --gris: #94a3b8;
+    --vert: #16a34a;
+    --vert-clair: #dcfce7;
+    --rouge: #dc2626;
+    --rouge-clair: #fee2e2;
 }
 
 * {
@@ -20,88 +23,441 @@
 }
 
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     background-color: var(--fond);
     color: var(--texte);
+    font-size: 15px;
     line-height: 1.6;
 }
 
-/* --- Header --- */
+
+
+
 header {
-    background-color: var(--blanc);
+    background: var(--blanc);
     border-bottom: 1px solid var(--bordure);
-    padding: 16px 24px;
+    padding: 0 32px;
+    height: 56px;
     display: flex;
     align-items: center;
-    gap: 10px;
-}
-
-header::before {
-    content: '';
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: var(--indigo);
-    flex-shrink: 0;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 header h1 {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
+}
+
+header nav {
+    display: flex;
+    gap: 4px;
+}
+
+header nav a {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--texte-sec);
+    text-decoration: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+}
+
+header nav a:hover {
+    background: var(--fond);
     color: var(--texte);
 }
 
-/* --- Main --- */
-main {
-    max-width: 680px;
-    margin: 32px auto;
-    background-color: var(--blanc);
-    border: 1px solid var(--bordure);
-    border-radius: 12px;
-    padding: 28px 32px;
+header nav a.active {
+    background: var(--indigo-clair);
+    color: var(--indigo);
+    font-weight: 600;
 }
 
-/* --- Titre du film --- */
-main h2 {
-    font-size: 22px;
+
+
+
+a.btn-theme {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    text-decoration: none;
+}
+
+a.btn-theme:hover {
+    background: var(--fond);
+}
+
+a.btn-theme img {
+    width: 20px;
+    height: 20px;
+}
+
+
+
+
+main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 32px 24px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+
+
+
+section {
+    background: var(--blanc);
+    border: 1px solid var(--bordure);
+    border-radius: 14px;
+    padding: 24px 28px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+
+
+
+section.rangee-deux-colonnes {
+    background: none;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+}
+
+@media (max-width: 600px) {
+    section.rangee-deux-colonnes {
+        grid-template-columns: 1fr;
+    }
+}
+
+section > h1 {
+    font-size: 11px;
     font-weight: 600;
-    color: var(--indigo);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--gris);
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--bordure);
+}
+
+
+
+
+article {
+    padding: 18px 0;
+    border-bottom: 1px solid var(--bordure);
+}
+
+article:first-of-type { padding-top: 4px; }
+article:last-child { border-bottom: none; padding-bottom: 0; }
+
+article h2 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+article p {
+    font-size: 13px;
     margin-bottom: 4px;
 }
 
-/* --- Titres japonais --- */
-main p:nth-of-type(1),
-main p:nth-of-type(2) {
-    font-size: 13px;
-    color: var(--gris);
-    margin-bottom: 2px;
-}
+article p:last-child { margin-bottom: 0; }
 
-/* --- Année --- */
-main p:nth-of-type(3) {
-    font-size: 13px;
-    color: var(--gris);
-    margin-top: 10px;
-}
-
-main strong {
-    color: var(--texte);
+article p strong {
+    color: var(--texte-sec);
     font-weight: 500;
 }
 
-/* --- Description --- */
-main p:nth-of-type(4) {
-    margin-top: 14px;
+
+
+
+a.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    background: var(--indigo);
+    color: #fff;
+    text-decoration: none;
+    padding: 11px 24px;
+    border-radius: 8px;
     font-size: 14px;
-    color: var(--texte);
-    border-top: 1px solid var(--bordure);
-    padding-top: 14px;
+    font-weight: 500;
 }
 
-/* --- Images --- */
-figure {
-    margin-top: 20px;
+a.btn-primary:hover { background: #4338ca; }
+
+a.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    background: var(--blanc);
+    color: var(--indigo);
+    border: 1px solid var(--indigo);
+    text-decoration: none;
+    padding: 9px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
 }
+
+a.btn-secondary:hover {
+    background: var(--indigo);
+    color: #fff;
+}
+
+a.btn-geolocal {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--blanc);
+    color: var(--texte);
+    border: 1px solid var(--bordure);
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+a.btn-geolocal::before {
+    content: '◉';
+    color: var(--indigo);
+}
+
+a.btn-geolocal:hover {
+    border-color: var(--indigo);
+    background: var(--indigo-clair);
+}
+
+
+
+
+label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--texte-sec);
+    margin-bottom: 6px;
+}
+
+select {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--bordure);
+    border-radius: 8px;
+    background: var(--blanc);
+    color: var(--texte);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    appearance: none;
+    cursor: pointer;
+}
+
+select:focus {
+    outline: none;
+    border-color: var(--indigo);
+}
+
+select:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+
+
+
+#carte-regions-img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid var(--bordure);
+    cursor: pointer;
+}
+
+
+
+
+a.filtre-carburant {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--bordure);
+    background: var(--blanc);
+    color: var(--texte-sec);
+    text-decoration: none;
+}
+
+a.filtre-carburant:hover { border-color: var(--indigo); color: var(--indigo); }
+a.filtre-carburant.active { background: var(--indigo); border-color: var(--indigo); color: #fff; }
+
+article > nav { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+
+article > nav > a {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--texte-sec);
+    text-decoration: none;
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--bordure);
+}
+
+article > nav > a:hover { border-color: var(--indigo); color: var(--indigo); }
+article > nav > a.active { background: var(--indigo); border-color: var(--indigo); color: #fff; font-weight: 600; }
+
+
+
+
+ul.prix-grille {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+    list-style: none;
+    padding: 0;
+}
+
+ul.prix-grille li.prix-tag {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--indigo-clair);
+    border: 1px solid #c7d2fe;
+    border-radius: 8px;
+    padding: 8px 14px;
+    min-width: 72px;
+}
+
+ul.prix-grille li.prix-tag strong {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--indigo);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+ul.prix-grille li.prix-tag p {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    margin: 0;
+}
+
+ul.prix-grille li.prix-tag.moins-cher { background: var(--vert-clair); border-color: #86efac; }
+ul.prix-grille li.prix-tag.moins-cher strong { color: var(--vert); }
+
+
+
+
+em.badge {
+    font-style: normal;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-left: 6px;
+}
+
+em.badge-vert { background: var(--vert-clair); color: var(--vert); }
+em.badge-rouge { background: var(--rouge-clair); color: var(--rouge); }
+
+
+
+
+ul.histogramme {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+ul.histogramme li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+}
+
+ul.histogramme li strong {
+    min-width: 140px;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+ul.histogramme li meter {
+    flex: 1;
+    height: 10px;
+    appearance: none;
+    background: var(--bordure);
+    border: none;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+ul.histogramme li meter::-webkit-meter-bar { background: var(--bordure); }
+ul.histogramme li meter::-webkit-meter-optimum-value { background: var(--indigo); }
+ul.histogramme li meter::-moz-meter-bar { background: var(--indigo); }
+
+ul.histogramme li p {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--texte-sec);
+    min-width: 24px;
+    text-align: right;
+    margin: 0;
+}
+
+
+
+
+section.section-cartes article {
+    background: var(--fond);
+    border: 1px solid var(--bordure);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    border-bottom: none;
+}
+
+section.section-cartes article h2 {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--gris);
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--bordure);
+}
+
+section.section-cartes article p {
+    font-size: 13px;
+    padding: 7px 12px;
+    border-radius: 6px;
+    margin-bottom: 5px;
+    background: var(--blanc);
+    border: 1px solid var(--bordure);
+    border-left: 3px solid var(--indigo);
+}
+
+
+
+figure { margin-top: 16px; }
 
 figure img {
     width: 100%;
@@ -111,45 +467,19 @@ figure img {
 }
 
 figcaption {
-    font-size: 11px;
-    color: var(--gris);
-    margin-top: 6px;
+     font-size: 11px; color: var(--gris); margin-top: 6px; 
 }
 
-/* --- Lien "autre film" --- */
-main > p:last-of-type {
-    margin-top: 24px;
-    text-align: center;
-}
 
-main > p:last-of-type a {
-    background-color: var(--indigo);
-    color: #fff;
-    text-decoration: none;
-    padding: 8px 20px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    display: inline-block;
-    transition: background 0.15s;
-}
 
-main > p:last-of-type a:hover {
-    background-color: #4f46e5;
-}
 
-/* --- Footer --- */
 footer {
     text-align: center;
-    padding: 20px;
+    padding: 24px 20px;
     font-size: 13px;
+    color: var(--texte-sec);
+    border-top: 1px solid var(--bordure);
 }
 
-footer a {
-    color: var(--indigo);
-    text-decoration: none;
-}
-
-footer a:hover {
-    text-decoration: underline;
-}
+footer a { color: var(--indigo); text-decoration: none; font-weight: 500; }
+footer a:hover { text-decoration: underline; }
