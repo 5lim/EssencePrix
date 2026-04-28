@@ -1,4 +1,25 @@
-<?php require 'include/header_inc.php';?>
+<?php
+require 'include/header_inc.php';
+require 'include/functions.inc.php';
+
+// --- Récupération des données depuis le CSV ---
+
+$total       = obtenirTotalConsultations();
+$top_villes  = obtenirTopVilles(10);
+
+// La ville la plus consultée est la première du tableau (déjà triée)
+$ville_top = '';
+if (!empty($top_villes)) {
+    $ville_top = $top_villes[0]['ville'];
+}
+
+// Pour l'histogramme, on a besoin du maximum pour calculer les proportions
+// Ex: si Paris a 50 consultations et Lyon 20, la barre de Paris = 100%, Lyon = 40%
+$max_consultations = 0;
+if (!empty($top_villes)) {
+    $max_consultations = $top_villes[0]['nb'];
+}
+?>
 
     <section>
 
@@ -6,17 +27,33 @@
 
         <article>
             <h2>Total des recherches</h2>
-            <p><strong>—</strong> recherches effectuées</p>
-        </article>
-
-        <article>
-            <h2>Carburant le plus recherché</h2>
-            <p><strong>—</strong></p>
+            <p>
+                <strong>
+                    <?php
+                    if ($total > 0) {
+                        echo $total;
+                    } else {
+                        echo '0';
+                    }
+                    ?>
+                </strong>
+                recherche<?php if ($total > 1) { echo 's'; } ?> effectuée<?php if ($total > 1) { echo 's'; } ?>
+            </p>
         </article>
 
         <article>
             <h2>Ville la plus consultée</h2>
-            <p><strong>—</strong></p>
+            <p>
+                <strong>
+                    <?php
+                    if ($ville_top !== '') {
+                        echo htmlspecialchars($ville_top);
+                    } else {
+                        echo '—';
+                    }
+                    ?>
+                </strong>
+            </p>
         </article>
 
     </section>
@@ -27,75 +64,44 @@
 
         <article>
 
-            <ul class="histogramme">
+            <?php if (empty($top_villes)): ?>
 
-                <li>
-                    <strong>Nom de ville</strong>
-                    <meter class="histo-barre" value="0" max="100"></meter>
-                    <p>—</p>
-                </li>
+                <p>Aucune consultation enregistrée pour le moment.</p>
 
-                <li>
-                    <strong>Nom de ville</strong>
-                    <meter class="histo-barre" value="0" max="100"></meter>
-                    <p>—</p>
-                </li>
+            <?php else: ?>
 
-                <li>
-                    <strong>Nom de ville</strong>
-                    <meter class="histo-barre" value="0" max="100"></meter>
-                    <p>—</p>
-                </li>
+                <ul class="histogramme">
 
-            </ul>
-        </article>
+                    <?php foreach ($top_villes as $ligne): ?>
 
-    </section>
+                        <li>
+                            <strong><?= htmlspecialchars($ligne['ville']) ?> (<?= htmlspecialchars($ligne['dept']) ?>)</strong>
 
-    <section>
+                            <?php
+                            // On calcule la valeur proportionnelle pour la barre <meter>
+                            // Si Paris a 50 visites et c'est le max, sa valeur = 100
+                            // Si Lyon a 20 visites : (20 / 50) * 100 = 40
+                            if ($max_consultations > 0) {
+                                $valeur_metre = ($ligne['nb'] / $max_consultations) * 100;
+                            } else {
+                                $valeur_metre = 0;
+                            }
+                            ?>
 
-        <h1>Répartition par carburant</h1>
+                            <meter class="histo-barre"
+                                   value="<?= $valeur_metre ?>"
+                                   max="100">
+                            </meter>
 
-        <article>
-            <ul class="histogramme">
+                            <p><?= $ligne['nb'] ?></p>
+                        </li>
 
-                <li>
-                    <strong>Gazole</strong>
-                    <meter class="histo-barre" value="0" max="100"></meter>
-                    <p>—</p>
-                </li>
+                    <?php endforeach; ?>
 
-                <li>
-                    <strong>SP95</strong>
-                    <meter class="histo-barre" value="0" max="100"></meter>
-                    <p>—</p>
-                </li>
+                </ul>
 
-                <li>
-                    <strong>E10</strong>
-                    <meter class="histo-barre" value="0" max="100"></meter>
-                    <p>—</p>
-                </li>
+            <?php endif; ?>
 
-                <li>
-                    <strong>SP98</strong>
-                    <meter class="histo-barre" value="0" max="100"></meter>
-                    <p>—</p>
-                </li>
-
-                <li>
-                    <strong>E85</strong>
-                    <meter class="histo-barre" value="0" max="100"></meter>
-                    <p>—</p>
-                </li>
-
-                <li>
-                    <strong>GPLc</strong>
-                    <meter class="histo-barre" value="0" max="100"></meter>
-                    <p>—</p>
-                </li>
-
-            </ul>
         </article>
 
     </section>

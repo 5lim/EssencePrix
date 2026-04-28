@@ -79,7 +79,13 @@ if ($xml_brut !== false && str_starts_with(trim($xml_brut), '<')) {
             <h2>API ipinfo — données enrichies (token)</h2>
 
             <?php if (isset($infos_api_json['city'])): ?>
-                <?php $coords = explode(',', $infos_api_json['loc'] ?? ','); ?>
+               <?php
+                    if (isset($infos_api_json['loc'])) {
+                        $coords = explode(',', $infos_api_json['loc']);
+                    } else {
+                        $coords = ['—', '—'];
+                    }
+                ?>
                 <p><strong>Ville :</strong>        <?= htmlspecialchars($infos_api_json['city']     ?? '—') ?></p>
                 <p><strong>Région :</strong>        <?= htmlspecialchars($infos_api_json['region']   ?? '—') ?></p>
                 <p><strong>Code postal :</strong>   <?= htmlspecialchars($infos_api_json['postal']   ?? '—') ?></p>
