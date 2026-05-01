@@ -16,18 +16,6 @@ if (isset($_GET['departement']) && $_GET['departement'] !== '') {
     $departement = '';
 }
 
-if (isset($_GET['ville']) && $_GET['ville'] !== '') {
-    $ville = htmlspecialchars($_GET['ville']);
-} else {
-    $ville = '';
-}
-
-if (isset($_GET['code_postal']) && $_GET['code_postal'] !== '') {
-    $code_postal = htmlspecialchars($_GET['code_postal']);
-} else {
-    $code_postal = '';
-}
-
 // --- Données selon la sélection ---
 
 $departements = [];
@@ -41,7 +29,7 @@ if ($departement !== '') {
 }
 
 // --- Cookie : dernière ville consultée ---
-// Format : "PARIS|75001|75"
+// Format stocké : "PARIS|75001|75"
 
 $derniere_ville = '';
 $dernier_cp     = '';
@@ -54,6 +42,7 @@ if (isset($_COOKIE['derniere_ville']) && $_COOKIE['derniere_ville'] !== '') {
         $dernier_cp     = htmlspecialchars($parties[1]);
         $dernier_dept   = htmlspecialchars($parties[2]);
     } else {
+        // Cookie mal formé, on le supprime
         setcookie('derniere_ville', '', time() - 1, '/');
     }
 }
@@ -64,7 +53,7 @@ if (isset($_COOKIE['derniere_ville']) && $_COOKIE['derniere_ville'] !== '') {
         <section>
             <h1>Localisation auto</h1>
             <article>
-                <p>Trouvez les stations les moins chères dans un rayon de 5 km autour de vous.</p>
+                <p>Trouvez les stations les moins chères autour de vous.</p>
                 <p>
                     <a href="resultats.php?mode=geolocal" class="btn-geolocal">Près de moi</a>
                 </p>
@@ -116,8 +105,7 @@ if (isset($_COOKIE['derniere_ville']) && $_COOKIE['derniere_ville'] !== '') {
             </figure>
 
             <?php
-            // Le bloc <map> avec toutes les coordonnées est le travail du binôme.
-            // Copier-coller ici exactement le bloc <map>...</map> de son index.php
+            // Copier-coller ici le bloc <map>...</map> de l'index.php du binôme
             ?>
 
         </article>
@@ -130,53 +118,79 @@ if (isset($_COOKIE['derniere_ville']) && $_COOKIE['derniere_ville'] !== '') {
 
         <article>
 
-            <?php
-            // ÉTAPE 1 : sélection du département
-            // On affiche la liste des départements sous forme de liens <a>
-            // Chaque lien recharge la page avec ?region=...&departement=XX
-            ?>
-
             <?php if ($region !== ''): ?>
 
-                <p><strong>Département :</strong></p>
+                <form method="get" action="index.php">
 
-                <nav>
-                    <?php foreach ($departements as $code => $nom): ?>
-                        <a href="index.php?region=<?= htmlspecialchars($region) ?>&amp;departement=<?= htmlspecialchars($code) ?>#carte"
-                           class="<?php if ($departement === $code) { echo 'active'; } ?>">
-                            <?= htmlspecialchars($code) ?> — <?= htmlspecialchars($nom) ?>
-                        </a>
-                    <?php endforeach; ?>
-                </nav>
+                    <?php
+                    // Champ caché pour garder la région quand on soumet le département
+                    ?>
+                    <input type="hidden" name="region" value="<?= htmlspecialchars($region) ?>">
+
+                    <p>
+                        <label for="select-departement">Département</label>
+                        <select id="select-departement" name="departement">
+                            <option value="">— Choisir un département —</option>
+                            <?php foreach ($departements as $code => $nom): ?>
+                                <option value="<?= htmlspecialchars($code) ?>"
+                                    <?php if ($departement === $code) { echo 'selected'; } ?>>
+                                    <?= htmlspecialchars($code) ?> — <?= htmlspecialchars($nom) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </p>
+
+                    <p>
+                        <input type="submit" value="Valider" class="btn-primary">
+                    </p>
+
+                </form>
 
             <?php else: ?>
 
-                <p>Cliquez sur une région sur la carte pour afficher les départements.</p>
+                <p>Cliquez sur une région sur la carte pour commencer.</p>
 
             <?php endif; ?>
 
         </article>
 
-        <?php
-        // ÉTAPE 2 : sélection de la ville
-        // On affiche la liste des villes sous forme de liens <a>
-        // Chaque lien envoie directement vers resultats.php avec tous les paramètres
-        ?>
-
         <?php if ($departement !== ''): ?>
 
             <article>
 
-                <p><strong>Ville :</strong></p>
+                <form method="get" action="resultats.php">
 
-                <nav>
-                    <?php foreach ($villes as $v): ?>
-                        <a href="resultats.php?region=<?= htmlspecialchars($region) ?>&amp;departement=<?= htmlspecialchars($departement) ?>&amp;ville=<?= urlencode($v['nom']) ?>&amp;code_postal=<?= htmlspecialchars($v['code_postal']) ?>"
-                           class="<?php if ($ville === $v['nom']) { echo 'active'; } ?>">
-                            <?= htmlspecialchars($v['nom']) ?> (<?= htmlspecialchars($v['code_postal']) ?>)
-                        </a>
-                    <?php endforeach; ?>
-                </nav>
+                    <?php
+                    // On garde région et département pour resultats.php
+                    ?>
+                    <input type="hidden" name="region"      value="<?= htmlspecialchars($region) ?>">
+                    <input type="hidden" name="departement" value="<?= htmlspecialchars($departement) ?>">
+
+                    <p>
+                        <label for="select-ville">Ville</label>
+                        <select id="select-ville" name="ville_cp">
+                            <option value="">— Choisir une ville —</option>
+                            <?php foreach ($villes as $v): ?>
+                                <?php
+                                // On met ville ET code postal ensemble dans la value
+                                // séparés par | pour pouvoir les récupérer dans resultats.php
+                                // avec explode()
+                                // Ex : value="PARIS|75001"
+                                $valeur = $v['nom'] . '|' . $v['code_postal'];
+                                ?>
+                                <option value="<?= htmlspecialchars($valeur) ?>">
+                                    <?= htmlspecialchars($v['nom']) ?>
+                                    (<?= htmlspecialchars($v['code_postal']) ?>)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </p>
+
+                    <p>
+                        <input type="submit" value="Rechercher" class="btn-primary">
+                    </p>
+
+                </form>
 
             </article>
 
