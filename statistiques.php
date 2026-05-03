@@ -1,20 +1,15 @@
 <?php
 require 'include/header_inc.php';
-require 'include/functions.inc.php';
-
-// --- Récupération des données depuis le CSV ---
+require 'include/functions_inc.php';
 
 $total       = obtenirTotalConsultations();
 $top_villes  = obtenirTopVilles(10);
 
-// La ville la plus consultée est la première du tableau (déjà triée)
 $ville_top = '';
 if (!empty($top_villes)) {
     $ville_top = $top_villes[0]['ville'];
 }
 
-// Pour l'histogramme, on a besoin du maximum pour calculer les proportions
-// Ex: si Paris a 50 consultations et Lyon 20, la barre de Paris = 100%, Lyon = 40%
 $max_consultations = 0;
 if (!empty($top_villes)) {
     $max_consultations = $top_villes[0]['nb'];
@@ -64,43 +59,28 @@ if (!empty($top_villes)) {
 
         <article>
 
-            <?php if (empty($top_villes)): ?>
+            <?php
+            if (empty($top_villes)) {
+                echo '<p>Aucune consultation enregistrée pour le moment.</p>';
+            } else {
+                echo '<ul class="histogramme">';
+                foreach ($top_villes as $ligne) {
+                    echo '<li>';
+                    echo '<strong>' . htmlspecialchars($ligne['ville']) . ' (' . htmlspecialchars($ligne['dept']) . ')</strong>';
 
-                <p>Aucune consultation enregistrée pour le moment.</p>
+                    if ($max_consultations > 0) {
+                        $valeur_metre = ($ligne['nb'] / $max_consultations) * 100;
+                    } else {
+                        $valeur_metre = 0;
+                    }
 
-            <?php else: ?>
-
-                <ul class="histogramme">
-
-                    <?php foreach ($top_villes as $ligne): ?>
-
-                        <li>
-                            <strong><?= htmlspecialchars($ligne['ville']) ?> (<?= htmlspecialchars($ligne['dept']) ?>)</strong>
-
-                            <?php
-                            // On calcule la valeur proportionnelle pour la barre <meter>
-                            // Si Paris a 50 visites et c'est le max, sa valeur = 100
-                            // Si Lyon a 20 visites : (20 / 50) * 100 = 40
-                            if ($max_consultations > 0) {
-                                $valeur_metre = ($ligne['nb'] / $max_consultations) * 100;
-                            } else {
-                                $valeur_metre = 0;
-                            }
-                            ?>
-
-                            <meter class="histo-barre"
-                                   value="<?= $valeur_metre ?>"
-                                   max="100">
-                            </meter>
-
-                            <p><?= $ligne['nb'] ?></p>
-                        </li>
-
-                    <?php endforeach; ?>
-
-                </ul>
-
-            <?php endif; ?>
+                    echo '<meter class="histo-barre" value="' . $valeur_metre . '" max="100"></meter>';
+                    echo '<p>' . $ligne['nb'] . '</p>';
+                    echo '</li>';
+                }
+                echo '</ul>';
+            }
+            ?>
 
         </article>
 

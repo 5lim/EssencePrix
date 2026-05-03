@@ -1,21 +1,39 @@
 :root {
-    --fond:         #111111;
-    --blanc:        #1e1e1e;
-    --bordure:      #333333;
-    --texte:        #e8e8e8;
-    --texte-sec:    #999999;
-    --gris:         #666666;
-    --indigo:       #6366f1;
-    --indigo-clair: #1e1b4b;
-    --indigo-hover: #818cf8;
-    --vert-clair:   #052e16;
-    --rouge-clair:  #2d0a0a;
+    --fond:          #0a1410;
+    --blanc:         #111e19;
+    --bordure:       #1e3028;
+    --bordure-forte: #2a4038;
+    --accent:        #5dcaa5;
+    --accent-clair:  #04342c;
+    --accent-sombre: #1d9e75;
+    --texte:         #e8f5f0;
+    --texte-sec:     #8ab0a0;
+    --gris:          #4a6e60;
+    --vert:          #22c55e;
+    --vert-clair:    #052e16;
+    --vert-bordure:  #166534;
+    --rouge:         #f87171;
+    --rouge-clair:   #2d0a0a;
+    --noir:          #050e0b;
+}
+
+header {
+    background: var(--noir);
+}
+
+select {
+    background-color: var(--blanc);
+    color: var(--texte);
 }
 
 .section-cartes article {
-    background-color: #0a0a0a;
+    background: #07100d;
 }
 
 .section-cartes article p {
-    background-color: #1a1a1a;
+    background: var(--blanc);
+}
+
+.img-header {
+    height: 100%;
 }

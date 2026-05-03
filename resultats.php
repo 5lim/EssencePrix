@@ -1,76 +1,123 @@
 <?php
 require 'include/header_inc.php';
-require 'include/functions.inc.php';
+require 'include/functions_inc.php';
 
-// --- Paramètres GET ---
 
-$mode        = isset($_GET['mode'])        && $_GET['mode']        !== '' ? htmlspecialchars($_GET['mode'])        : '';
-$ville       = isset($_GET['ville'])       && $_GET['ville']       !== '' ? htmlspecialchars($_GET['ville'])       : '';
-$code_postal = isset($_GET['code_postal']) && $_GET['code_postal'] !== '' ? htmlspecialchars($_GET['code_postal']) : '';
-$departement = isset($_GET['departement']) && $_GET['departement'] !== '' ? htmlspecialchars($_GET['departement']) : '';
-$region      = isset($_GET['region'])      && $_GET['region']      !== '' ? htmlspecialchars($_GET['region'])      : '';
-$tri         = isset($_GET['tri'])         && $_GET['tri']         !== '' ? htmlspecialchars($_GET['tri'])         : 'prix';
+if (isset($_GET['mode']) && $_GET['mode'] !== '') {
+    $mode = htmlspecialchars($_GET['mode']);
+} else {
+    $mode = '';
+}
 
-// Récupération du carburant sélectionné pour le filtre d'affichage
-// Par défaut on affiche tout, sinon on filtre sur le carburant voulu
-$carburant_filtre = isset($_GET['carburant']) && $_GET['carburant'] !== '' ? htmlspecialchars($_GET['carburant']) : '';
+if (isset($_GET['ville']) && $_GET['ville'] !== '') {
+    $ville = htmlspecialchars($_GET['ville']);
+} else {
+    $ville = '';
+}
 
-// --- Mode géolocalisation ---
+if (isset($_GET['code_postal']) && $_GET['code_postal'] !== '') {
+    $code_postal = htmlspecialchars($_GET['code_postal']);
+} else {
+    $code_postal = '';
+}
+
+if (isset($_GET['departement']) && $_GET['departement'] !== '') {
+    $departement = htmlspecialchars($_GET['departement']);
+} else {
+    $departement = '';
+}
+
+if (isset($_GET['region']) && $_GET['region'] !== '') {
+    $region = htmlspecialchars($_GET['region']);
+} else {
+    $region = '';
+}
+
+if (isset($_GET['tri']) && $_GET['tri'] !== '') {
+    $tri = htmlspecialchars($_GET['tri']);
+} else {
+    $tri = 'distance';
+}
+
+if (isset($_GET['lat']) && is_numeric($_GET['lat'])) {
+    $lat = (float)$_GET['lat'];
+} else {
+    $lat = null;
+}
+
+if (isset($_GET['lon']) && is_numeric($_GET['lon'])) {
+    $lon = (float)$_GET['lon'];
+} else {
+    $lon = null;
+}
+
+if (isset($_GET['rayon']) && is_numeric($_GET['rayon'])) {
+    $rayon = (int)$_GET['rayon'];
+} else {
+    $rayon = 10;
+}
+
+if (isset($_GET['carburant']) && $_GET['carburant'] !== '') {
+    $carburant_filtre = htmlspecialchars($_GET['carburant']);
+} else {
+    $carburant_filtre = '';
+}
+
+if (isset($_GET['ville_cp']) && $_GET['ville_cp'] !== '') {
+    $parties = explode('|', $_GET['ville_cp']);
+    if (count($parties) === 4) {
+        $ville       = htmlspecialchars($parties[0]);
+        $code_postal = htmlspecialchars($parties[1]);
+        $lat         = (float)$parties[2];
+        $lon         = (float)$parties[3];
+    }
+}
+
 
 $geo = [];
 if ($mode === 'geolocal') {
-    $ip  = $_SERVER['REMOTE_ADDR'];
+    $ip  = getIP();
     $geo = geolocalisationParIP($ip);
 
     if (!empty($geo)) {
-        $ville = $geo['ville'];
+        $ville       = $geo['ville'];
+        $code_postal = $geo['code_postal'];
+        $lat         = (float)$geo['latitude'];
+        $lon         = (float)$geo['longitude'];
     }
 }
 
-// --- Récupération des stations ---
-// On sépare bien les deux cas : ville précise (par CP) ou département entier
 
-$stations = [];
+$carburants_dispo = ['Gazole', 'SP95', 'E10', 'SP98', 'E85', 'GPLc'];
 
-if ($mode === 'geolocal' && !empty($geo)) {
-    // Mode géoloc : on cherche par le CP retourné par l'API IP si on l'a,
-    // sinon on fait une recherche par département (les 2 premiers chiffres du CP)
-    if ($code_postal !== '') {
-        $stations = obtenirStations($code_postal);
-    } elseif ($departement !== '') {
-        $stations = obtenirStationsDepartement($departement);
+if ($lat !== null && $lon !== null) {
+    $tri_valides = array_merge(['distance'], $carburants_dispo);
+    if (!in_array($tri, $tri_valides)) {
+        $tri = 'distance';
     }
+    $stations = obtenirStationsProches($lat, $lon, $rayon, $tri);
 } elseif ($code_postal !== '') {
     $stations = obtenirStations($code_postal);
 } elseif ($departement !== '') {
-    $stations = obtenirStationsDepartement($departement);
+    if (!in_array($tri, $carburants_dispo)) {
+        $tri = 'Gazole';
+    }
+    $stations = obtenirStationsDepartement($departement, $tri);
+} else {
+    $stations = [];
 }
 
-// On récupère aussi le flux XML pour l'affichage complémentaire (exigence du sujet)
 $xml_stations = null;
 if ($code_postal !== '') {
     $xml_stations = obtenirStationsXML($code_postal);
 }
 
-// --- Tri ---
-
-if ($tri === 'prix' && !empty($stations)) {
-    $carb_tri = $carburant_filtre !== '' ? $carburant_filtre : 'Gazole';
-    usort($stations, function($a, $b) use ($carb_tri) {
-        $pa = $a['prix'][$carb_tri] ?? PHP_FLOAT_MAX;
-        $pb = $b['prix'][$carb_tri] ?? PHP_FLOAT_MAX;
-        return $pa <=> $pb;
-    });
-}
-
-// --- Enregistrement consultation + cookie ---
 
 if ($ville !== '' && $code_postal !== '' && $departement !== '' && $region !== '') {
     enregistrerConsultation($ville, $code_postal, $departement, $region);
-    setcookie('derniere_ville', $ville . '|' . $code_postal . '|' . $departement, time() + 60 * 60 * 24 * 30, '/');
+    setcookie('derniere_ville', $ville . '|' . $code_postal . '|' . $departement . '|' . $lat . '|' . $lon, time() + 60 * 60 * 24 * 30, '/');
 }
 
-// --- Prix minimum par carburant (pour mettre en vert le moins cher) ---
 
 $prix_min = ['Gazole' => null, 'SP95' => null, 'E10' => null, 'SP98' => null, 'E85' => null, 'GPLc' => null];
 
@@ -82,9 +129,6 @@ foreach ($stations as $s) {
         }
     }
 }
-
-// Liste des carburants pour les filtres
-$carburants_dispo = ['Gazole', 'SP95', 'E10', 'SP98', 'E85', 'GPLc'];
 ?>
 
     <section>
@@ -97,7 +141,9 @@ $carburants_dispo = ['Gazole', 'SP95', 'E10', 'SP98', 'E85', 'GPLc'];
                 <?php
                 if ($ville !== '') {
                     echo htmlspecialchars($ville);
-                    if ($code_postal !== '') echo ' (' . htmlspecialchars($code_postal) . ')';
+                    if ($code_postal !== '') {
+                        echo ' (' . htmlspecialchars($code_postal) . ')';
+                    }
                 } elseif ($departement !== '') {
                     echo 'Département ' . htmlspecialchars($departement);
                 } elseif ($mode === 'geolocal') {
@@ -108,102 +154,231 @@ $carburants_dispo = ['Gazole', 'SP95', 'E10', 'SP98', 'E85', 'GPLc'];
                 ?>
             </p>
 
+            <?php
+            if ($lat !== null && $lon !== null) {
+                echo '<form method="get" action="resultats.php" style="margin-top:12px">';
+                echo '<input type="hidden" name="mode"        value="' . htmlspecialchars($mode) . '">';
+                echo '<input type="hidden" name="ville"       value="' . htmlspecialchars($ville) . '">';
+                echo '<input type="hidden" name="code_postal" value="' . htmlspecialchars($code_postal) . '">';
+                echo '<input type="hidden" name="departement" value="' . htmlspecialchars($departement) . '">';
+                echo '<input type="hidden" name="region"      value="' . htmlspecialchars($region) . '">';
+                echo '<input type="hidden" name="lat"         value="' . $lat . '">';
+                echo '<input type="hidden" name="lon"         value="' . $lon . '">';
+                echo '<input type="hidden" name="tri"         value="' . htmlspecialchars($tri) . '">';
+                echo '<input type="hidden" name="carburant"   value="' . htmlspecialchars($carburant_filtre) . '">';
+                echo '<label for="select-rayon">Rayon de recherche</label>';
+                echo '<select id="select-rayon" name="rayon">';
+
+                if ($rayon === 5) {
+                    echo '<option value="5" selected>5 km</option>';
+                } else {
+                    echo '<option value="5">5 km</option>';
+                }
+
+                if ($rayon === 10) {
+                    echo '<option value="10" selected>10 km</option>';
+                } else {
+                    echo '<option value="10">10 km</option>';
+                }
+
+                if ($rayon === 20) {
+                    echo '<option value="20" selected>20 km</option>';
+                } else {
+                    echo '<option value="20">20 km</option>';
+                }
+
+                if ($rayon === 50) {
+                    echo '<option value="50" selected>50 km</option>';
+                } else {
+                    echo '<option value="50">50 km</option>';
+                }
+
+                echo '</select>';
+                echo '<input type="submit" value="Appliquer" class="btn-primary">';
+                echo '</form>';
+            }
+            ?>
+
+            <p style="margin-top:12px; margin-bottom:6px"><strong>Filtrer par carburant :</strong></p>
             <nav aria-label="Filtres carburant">
-                <a href="resultats.php?<?= http_build_query(array_merge($_GET, ['carburant' => ''])) ?>"
-                   class="filtre-carburant <?= $carburant_filtre === '' ? 'active' : '' ?>">Tous</a>
-                <?php foreach ($carburants_dispo as $c): ?>
-                    <a href="resultats.php?<?= http_build_query(array_merge($_GET, ['carburant' => $c])) ?>"
-                       class="filtre-carburant <?= $carburant_filtre === $c ? 'active' : '' ?>">
-                        <?= htmlspecialchars($c) ?>
-                    </a>
-                <?php endforeach; ?>
+                <?php
+                if ($carburant_filtre === '') {
+                    $classe_tous = 'filtre-carburant active';
+                } else {
+                    $classe_tous = 'filtre-carburant';
+                }
+                echo '<a href="resultats.php?' . http_build_query(array_merge($_GET, ['carburant' => ''])) . '" class="' . $classe_tous . '">Tous</a>';
+
+                foreach ($carburants_dispo as $c) {
+                    if ($carburant_filtre === $c) {
+                        $classe = 'filtre-carburant active';
+                    } else {
+                        $classe = 'filtre-carburant';
+                    }
+                    echo '<a href="resultats.php?' . http_build_query(array_merge($_GET, ['carburant' => $c])) . '" class="' . $classe . '">';
+                    echo htmlspecialchars($c);
+                    echo '</a>';
+                }
+                ?>
             </nav>
 
-            <p style="margin-top:12px">
-                <strong>Tri :</strong>
-                <a href="resultats.php?<?= http_build_query(array_merge($_GET, ['tri' => 'prix'])) ?>"
-                   class="<?= $tri === 'prix' ? 'active' : '' ?>">Prix croissant</a>
-                &nbsp;
-                <a href="resultats.php?<?= http_build_query(array_merge($_GET, ['tri' => 'defaut'])) ?>"
-                   class="<?= $tri === 'defaut' ? 'active' : '' ?>">Par défaut</a>
-            </p>
+            <p style="margin-top:16px; margin-bottom:6px"><strong>Trier par :</strong></p>
+            <nav aria-label="Tri des résultats">
+                <?php
+                if ($lat !== null && $lon !== null) {
+                    if ($tri === 'distance') {
+                        $classe = 'filtre-carburant active';
+                    } else {
+                        $classe = 'filtre-carburant';
+                    }
+                    echo '<a href="resultats.php?' . http_build_query(array_merge($_GET, ['tri' => 'distance'])) . '" class="' . $classe . '">Distance</a>';
+                }
+
+                foreach ($carburants_dispo as $c) {
+                    if ($tri === $c) {
+                        $classe = 'filtre-carburant active';
+                    } else {
+                        $classe = 'filtre-carburant';
+                    }
+                    echo '<a href="resultats.php?' . http_build_query(array_merge($_GET, ['tri' => $c])) . '" class="' . $classe . '">';
+                    echo htmlspecialchars($c);
+                    echo '</a>';
+                }
+                ?>
+            </nav>
+
         </article>
 
     </section>
 
     <section>
 
-        <h1>Stations proches <?php if (!empty($stations)) echo '(' . count($stations) . ')'; ?></h1>
-
-        <?php if (empty($stations)): ?>
-
-            <article>
-                <p>Aucune station trouvée pour cette recherche.</p>
-                <p><a href="index.php" class="btn-secondary">Retour à la recherche</a></p>
-            </article>
-
-        <?php else: ?>
-
-            <?php foreach ($stations as $s):
-                // Si un filtre carburant est actif et que la station ne le vend pas, on saute
-                if ($carburant_filtre !== '' && ($s['prix'][$carburant_filtre] === null)) continue;
-            ?>
-
-                <article>
-
-                    <h2>
-                        <?= htmlspecialchars($s['adresse']) ?> — <?= htmlspecialchars($s['ville']) ?>
-                        <?php if ($s['h24'] === 'Oui'): ?>
-                            <em class="badge badge-vert">24h/24</em>
-                        <?php endif; ?>
-                    </h2>
-
-                    <p><strong>Code postal :</strong> <?= htmlspecialchars($s['cp']) ?></p>
-
-                    <ul class="prix-grille">
-                        <?php foreach ($s['prix'] as $carb => $prix):
-                            // Si filtre actif, on n'affiche que le carburant sélectionné
-                            if ($carburant_filtre !== '' && $carb !== $carburant_filtre) continue;
-                        ?>
-                            <li class="prix-tag <?= ($prix !== null && $prix === $prix_min[$carb]) ? 'moins-cher' : '' ?>">
-                                <strong><?= htmlspecialchars($carb) ?></strong>
-                                <p>
-                                    <?= $prix !== null ? number_format($prix, 3, ',', '') . '&nbsp;€/L' : '—' ?>
-                                </p>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
-
-                </article>
-
-            <?php endforeach; ?>
-
-        <?php endif; ?>
-
-    </section>
-
-    <?php if ($xml_stations !== null): ?>
-    <section class="section-cartes">
-
-        <h1>Données complémentaires (XML)</h1>
-
-        <article>
-            <h2>Extrait du flux XML officiel</h2>
+        <h1>Stations proches
             <?php
-            $nb = 0;
-            foreach ($xml_stations as $item):
-                if ($nb >= 3) break;
-                $adresse_xml = (string)($item->adresse ?? $item->fields->adresse ?? '');
-                $ville_xml   = (string)($item->ville   ?? $item->fields->ville   ?? '');
-                if ($adresse_xml === '' && $ville_xml === '') continue;
-                $nb++;
+            if (!empty($stations)) {
+                echo '(' . count($stations) . ')';
+            }
             ?>
-                <p><?= htmlspecialchars($adresse_xml) ?><?= $ville_xml !== '' ? ' — ' . htmlspecialchars($ville_xml) : '' ?></p>
-            <?php endforeach; ?>
-        </article>
+        </h1>
+
+        <?php
+        if (empty($stations)) {
+            echo '<article>';
+            echo '<p>Aucune station trouvée pour cette recherche.</p>';
+            echo '<p><a href="index.php" class="btn-secondary">Retour à la recherche</a></p>';
+            echo '</article>';
+        } else {
+            foreach ($stations as $s) {
+                if ($carburant_filtre !== '' && $s['prix'][$carburant_filtre] === null) {
+                    continue;
+                }
+
+                echo '<article>';
+                echo '<h2>';
+                echo htmlspecialchars($s['adresse']) . ' — ' . htmlspecialchars($s['ville']);
+                if ($s['h24'] === 'Oui') {
+                    echo ' <em class="badge badge-vert">24h/24</em>';
+                }
+                echo '</h2>';
+
+                echo '<p><strong>Code postal :</strong> ' . htmlspecialchars($s['cp']) . '</p>';
+
+                echo '<ul class="prix-grille">';
+                foreach ($s['prix'] as $carb => $prix) {
+                    if ($carburant_filtre !== '' && $carb !== $carburant_filtre) {
+                        continue;
+                    }
+                    if ($prix !== null && $prix === $prix_min[$carb]) {
+                        $classe_min = 'prix-tag moins-cher';
+                    } else {
+                        $classe_min = 'prix-tag';
+                    }
+                    echo '<li class="' . $classe_min . '">';
+                    echo '<strong>' . htmlspecialchars($carb) . '</strong>';
+                    echo '<p>';
+                    if ($prix !== null) {
+                        echo number_format($prix, 3, ',', '') . '&nbsp;€/L';
+                    } else {
+                        echo '—';
+                    }
+                    echo '</p>';
+                    echo '</li>';
+                }
+                echo '</ul>';
+
+                if ($s['services'] !== '') {
+                    echo '<p><strong>Services :</strong> ' . htmlspecialchars($s['services']) . '</p>';
+                }
+
+                if (!empty($s['horaires']['jour'])) {
+                    echo '<p><strong>Horaires :</strong></p>';
+                    echo '<ul>';
+                    foreach ($s['horaires']['jour'] as $jour) {
+                        echo '<li>';
+                        echo htmlspecialchars($jour['@nom']) . ' : ';
+                        if ($jour['@ferme'] === 'Oui') {
+                            echo 'Fermé';
+                        } elseif (isset($jour['horaire']['@ouverture'], $jour['horaire']['@fermeture'])) {
+                            echo htmlspecialchars($jour['horaire']['@ouverture']);
+                            echo ' – ';
+                            echo htmlspecialchars($jour['horaire']['@fermeture']);
+                        } else {
+                            echo '—';
+                        }
+                        echo '</li>';
+                    }
+                    echo '</ul>';
+                }
+
+                echo '</article>';
+            }
+        }
+        ?>
 
     </section>
-    <?php endif; ?>
+
+    <?php
+    if ($xml_stations !== null) {
+        echo '<section class="section-cartes">';
+        echo '<h1>Données complémentaires (XML)</h1>';
+        echo '<article>';
+        echo '<h2>Extrait du flux XML officiel</h2>';
+        $nb = 0;
+        foreach ($xml_stations as $item) {
+            if ($nb >= 3) {
+                break;
+            }
+
+            if (isset($item->adresse)) {
+                $adresse_xml = (string)$item->adresse;
+            } elseif (isset($item->fields->adresse)) {
+                $adresse_xml = (string)$item->fields->adresse;
+            } else {
+                $adresse_xml = '';
+            }
+
+            if (isset($item->ville)) {
+                $ville_xml = (string)$item->ville;
+            } elseif (isset($item->fields->ville)) {
+                $ville_xml = (string)$item->fields->ville;
+            } else {
+                $ville_xml = '';
+            }
+
+            if ($adresse_xml === '' && $ville_xml === '') {
+                continue;
+            }
+            $nb++;
+            echo '<p>' . htmlspecialchars($adresse_xml);
+            if ($ville_xml !== '') {
+                echo ' — ' . htmlspecialchars($ville_xml);
+            }
+            echo '</p>';
+        }
+        echo '</article>';
+        echo '</section>';
+    }
+    ?>
 
     <section>
         <h1>Retour</h1>
